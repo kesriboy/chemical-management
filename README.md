@@ -133,15 +133,25 @@ npm run test:dom
 
 ## 七、在线访问（GitHub Pages）
 
-本项目为纯静态站点，可直接用 GitHub Pages 托管：
+本项目为纯静态站点，已部署至 GitHub Pages：
 
-1. 仓库 **Settings → Pages**
-2. Source 选择 **Deploy from a branch**，分支选 `main`、目录选 `/ (root)`
-3. 等待 1–2 分钟，访问 `https://<用户名>.github.io/<仓库名>/`
+**在线地址：https://kesriboy.github.io/chemical-management/**
+
+仓库地址：https://github.com/kesriboy/chemical-management
+
+本地修改后推送，Pages 会自动重新构建（通常 1–2 分钟）：
+
+```bash
+git add -A
+git commit -m "描述本次改动"
+git push origin main
+```
 
 > 在线版与本地版功能一致。**注意**：localStorage 按「域名 + 协议」隔离，
 > 因此在线版与本地 `file://` 打开时的数据**互不相通**。如需在线使用，
 > 请在在线环境中重新录入，或用「数据管理 → 导出 JSON」从本地迁移过去。
+
+仓库内置 GitHub Actions 工作流（`.github/workflows/ci.yml`），每次 push 到 `main` 自动运行上述两套测试。
 
 ---
 
