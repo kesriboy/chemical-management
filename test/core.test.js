@@ -333,6 +333,58 @@ t('单号固定 4 位补零', () => {
   ok(/LY20261109-0001$/.test(r.record.docNo), '格式错: ' + r.record.docNo);
 });
 
+/* ---------- 台账（附录三格式）：结余库存 running balance ---------- */
+console.log('\n[台账 / 附录三]');
+t('结余库存按日期升序累计', () => {
+  const c = Store.addChemical({ name: '台账品A', unit: 'kg', openingStock: 100 });
+  Store.addRecord({ date: '2026-11-02', chemicalId: c.id, qty: 30, applicant: '甲', purpose: 'P1', status: 'issued' });
+  Store.addRecord({ date: '2026-11-01', chemicalId: c.id, qty: 10, applicant: '乙', purpose: 'P2', status: 'issued' });
+  const blocks = Report.buildLedger({});
+  const b = blocks.find(x => x.chemical.id === c.id);
+  eq(b.rows.length, 2);
+  // 11-01 先发生：100 → 90；11-02：90 → 60
+  eq(b.rows[0].before, 100); eq(b.rows[0].after, 90);
+  eq(b.rows[1].before, 90);  eq(b.rows[1].after, 60);
+});
+t('退库在台账中为加项且数量显示为负', () => {
+  const c = Store.state.chemicals.find(x => x.name === '台账品A');
+  Store.addRecord({ date: '2026-11-03', chemicalId: c.id, qty: 5, applicant: '甲', purpose: '错领退回', status: 'returned' });
+  const b = Report.buildLedger({}).find(x => x.chemical.id === c.id);
+  const last = b.rows[b.rows.length - 1];
+  ok(last.returned === true, '应为退库行');
+  ok(String(last.purpose).indexOf('退库') === 0, '用途应带退库标记: ' + last.purpose);
+  eq(last.before, 60); eq(last.after, 65);
+});
+t('按日期区间筛选不破坏结余计算', () => {
+  const c = Store.state.chemicals.find(x => x.name === '台账品A');
+  // 只看 11-01：结余应仍是基于完整流水的 90（其后发生的领用不参与该行计算）
+  const b = Report.buildLedger({ from: '2026-11-01', to: '2026-11-01' }).find(x => x.chemical.id === c.id);
+  eq(b.rows.length, 1);
+  eq(b.rows[0].after, 90);
+});
+t('台账最终结余等于当前库存', () => {
+  const c = Store.state.chemicals.find(x => x.name === '台账品A');
+  const b = Report.buildLedger({}).find(x => x.chemical.id === c.id);
+  ok(b.stockOk, 'stockOk 应为 true（期初+退库-发放=当前库存）');
+  eq(b.finalBalance, Store.stockOf(c.id));
+});
+t('无记录的化学品不进入台账', () => {
+  Store.addChemical({ name: '台账空品', unit: '个', openingStock: 5 });
+  const names = Report.buildLedger({}).map(b => b.chemical.name);
+  ok(!names.includes('台账空品'), '不应包含无记录化学品');
+});
+t('打印块 HTML 含附录三要素', () => {
+  const blocks = Report.buildLedger({});
+  const html = Report.ledgerBlockHtml(blocks[0], { print: true, padTo: 10 });
+  ok(html.includes('物料号'), '缺物料号');
+  ok(html.includes('物品名称'), '缺物品名称');
+  ok(html.includes('危险分类'), '缺危险分类');
+  ok(html.includes('<th>结余库存</th>'), '缺结余库存列头');
+  // 补空行到 padTo
+  const emptyPads = (html.match(/<td>&nbsp;<\/td>/g) || []).length;
+  ok(emptyPads >= 10 - blocks[0].rows.length, '补空行数不足: ' + emptyPads);
+});
+
 /* ---------- 结果 ---------- */
 console.log('\n=== 结果：' + pass + ' 通过 / ' + fail + ' 失败 ===');
 if (fail) {

@@ -230,13 +230,19 @@ t('单位名称输入框存在', () => {
 
 /* ---------- 4. 领用记录表输出 ---------- */
 console.log('\n[4] 领用记录表输出');
-t('报表页渲染明细行', () => {
+t('报表页渲染台账分块（附录三格式）', () => {
   $$('.tab').find(b => b.dataset.page === 'report').click();
-  const rows = $$('#rpTable tbody tr');
-  ok(rows.length >= 2, '明细行数不足（含合计行）: ' + rows.length);
-  ok($('#rpTable tbody').textContent.includes('张伟'), '未渲染领用人');
+  const blocks = $$('#rpLedger .ledger-block');
+  ok(blocks.length >= 1, '台账块数不足: ' + blocks.length);
+  const txt = $('#rpLedger').textContent;
+  ok(txt.includes('物料号') && txt.includes('物品名称') && txt.includes('危险分类'), '缺信息行三要素');
+  ok(txt.includes('日期') && txt.includes('当前库存') && txt.includes('领用数量') &&
+     txt.includes('结余库存') && txt.includes('用途') && txt.includes('领料人'), '缺六列列头');
+  ok(txt.includes('张伟'), '未渲染领料人');
+  ok(txt.includes('测试乙醇'), '未渲染化学品');
 });
-t('报表抬头显示记录条数', () => {
+t('报表抬头为附录三标题且显示条数', () => {
+  ok($('#rpTitle').textContent.includes('附录三'), '标题错: ' + $('#rpTitle').textContent);
   ok($('#rpMeta').textContent.includes('1 条'), '条数错: ' + $('#rpMeta').textContent);
 });
 t('汇总表按化学品分组正确', () => {
@@ -258,7 +264,7 @@ t('日期筛选生效', () => {
   $('#rpTo').value = '2020-12-31';
   $('#rpFrom').dispatchEvent(new window.Event('change'));
   ok($('#rpMeta').textContent.includes('0 条'), '筛选未生效: ' + $('#rpMeta').textContent);
-  ok($('#rpTable tbody').textContent.includes('无记录'), '应显示空态');
+  ok($('#rpLedger').textContent.includes('无记录'), '应显示空态');
 });
 t('重置筛选恢复数据', () => {
   $('#rpResetBtn').click();
@@ -272,23 +278,29 @@ t('按化学品筛选生效', () => {
   $('#rpChem').value = '';
   $('#rpChem').dispatchEvent(new window.Event('change'));
 });
-t('导出 CSV 产出正确内容', () => {
+t('导出 CSV 产出正确内容（附录三列头）', () => {
   downloads.length = 0;
   const captured = captureBlob(() => $('#rpCsvBtn').click());
   ok(downloads.length === 1, '未触发下载');
   ok(downloads[0].download.endsWith('.csv'), '文件名异常: ' + downloads[0].download);
-  ok(captured.includes('序号') && captured.includes('化学品名称'), '表头缺失');
+  ok(captured.includes('物料号') && captured.includes('物品名称') && captured.includes('危险分类'), '信息列缺失');
+  ok(captured.includes('日期') && captured.includes('当前库存') && captured.includes('领用数量') &&
+     captured.includes('结余库存') && captured.includes('用途') && captured.includes('领料人'), '列头缺失');
   ok(captured.includes('张伟') && captured.includes('理化检验'), '数据行缺失');
   ok(captured.includes('测试乙醇'), '化学品缺失');
 });
-t('导出 Excel 产出 SpreadsheetML 结构', () => {
+t('导出 Excel 产出 SpreadsheetML 结构（附录三 + 汇总）', () => {
   downloads.length = 0;
   const captured = captureBlob(() => $('#rpXlsBtn').click());
   ok(downloads.length === 1, '未触发下载');
   ok(downloads[0].download.endsWith('.xls'), '文件名异常: ' + downloads[0].download);
   ok(captured.includes('<?xml version="1.0"'), '缺 XML 声明');
   ok(captured.includes('urn:schemas-microsoft-com:office:spreadsheet'), '缺 SpreadsheetML 命名空间');
-  ok(captured.includes('领用明细'), '缺明细工作表');
+  ok(captured.includes('附录三：化学品领用记录'), '缺附录三标题');
+  ok(captured.includes('化学品管理程序'), '缺页眉程序名');
+  ok(captured.includes('文件编号：') && captured.includes('版本号：'), '缺文件编号/版本');
+  ok(captured.includes('化学品领用记录'), '缺台账工作表');
+  ok(captured.includes('结余库存'), '缺结余库存列');
   ok(captured.includes('按化学品汇总'), '缺化学品汇总表');
   ok(captured.includes('按部门汇总'), '缺部门汇总表');
   ok(captured.includes('张伟'), '缺数据');
@@ -302,12 +314,18 @@ t('打印调用 window.print（延时 60ms 后触发，需等待）', async () =
   await new Promise(r => setTimeout(r, 150));
   ok(window.__printed === true, '未触发打印');
 });
-t('打印内容含签字栏与合计行', () => {
+t('打印内容为附录三受控表单版式', () => {
   const html = $('#printRoot').innerHTML;
-  ok(html.includes('p-title'), '缺标题');
-  ok(html.includes('p-sign'), '缺签字栏');
-  ok(html.includes('制表人'), '缺制表人');
-  ok(html.includes('合计'), '缺合计行');
+  ok(html.includes('p-head'), '缺页眉');
+  ok(html.includes('化学品管理程序'), '缺页眉程序名');
+  ok(html.includes('文件编号：') && html.includes('版本号：'), '缺文件编号/版本');
+  ok(html.includes('附录三：化学品领用记录'), '缺标题');
+  ok(html.includes('p-block'), '缺化学品分块');
+  ok(html.includes('p-foot'), '缺页脚');
+  ok(html.includes('机密/专有'), '缺密级标注');
+  ok(html.includes('受控文件'), '缺受控文件标注');
+  ok(html.includes('第1页，共1页'), '缺页码');
+  ok(html.includes('质量管理系统'), '缺页脚体系名');
 });
 t('化学品台账导出含库存与下限', () => {
   downloads.length = 0;
@@ -426,12 +444,16 @@ t('导出 JSON 备份', () => {
   const data = JSON.parse(captured);
   ok(Array.isArray(data.chemicals) && Array.isArray(data.records), '备份结构错');
 });
-t('单位名称保存并进入报表抬头', () => {
+t('单位名称保存并进入报表副标题与导出', () => {
   $('#orgName').value = '迈昆（苏州）电子科技有限公司';
   $('#orgName').dispatchEvent(new window.Event('change'));
   eq(Store.state.meta.orgName, '迈昆（苏州）电子科技有限公司');
   $$('.tab').find(b => b.dataset.page === 'report').click();
-  ok($('#rpTitle').textContent.includes('迈昆'), '抬头未带单位名: ' + $('#rpTitle').textContent);
+  ok($('#rpSubtitle').textContent.includes('迈昆'), '副标题未带单位名: ' + $('#rpSubtitle').textContent);
+  // Excel 导出的页眉组织行也应带单位名
+  downloads.length = 0;
+  const captured = captureBlob(() => $('#rpXlsBtn').click());
+  ok(captured.includes('迈昆（苏州）电子科技有限公司'), 'Excel 未带单位抬头');
 });
 t('存储标志显示正常', () => {
   ok($('#storageFlag').textContent.includes('正常'), '存储标志: ' + $('#storageFlag').textContent);

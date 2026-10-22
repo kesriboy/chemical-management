@@ -568,35 +568,17 @@
     var f = currentFilter();
     Report.currentFilter = f;
     var records = Report.filterRecords(f);
-    var rows = Report.detailRows(records);
+    var blocks = Report.buildLedger(f);
 
-    $('#rpMeta').textContent = '共 ' + records.length + ' 条';
+    $('#rpMeta').textContent = '共 ' + records.length + ' 条 / ' + blocks.length + ' 种化学品';
     $('#rpSubtitle').textContent = Report.buildMeta(records, f).split('　|　').join('　　');
-    $('#rpTitle').textContent = (Store.state.meta.orgName ? Store.state.meta.orgName + '　' : '') + '化学品领用记录表';
+    $('#rpTitle').textContent = '附录三：化学品领用记录';
 
-    var tbody = $('#rpTable').querySelector('tbody');
-    if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="13" class="empty">当前筛选条件下无记录</td></tr>';
+    var ledgerEl = $('#rpLedger');
+    if (!records.length) {
+      ledgerEl.innerHTML = '<div class="empty" style="padding:32px;text-align:center;color:var(--text-3)">当前筛选条件下无记录</div>';
     } else {
-      tbody.innerHTML = rows.map(function (r) {
-        return '<tr>' +
-          '<td class="num">' + r.idx + '</td>' +
-          '<td class="mono">' + U.esc(r.date) + '</td>' +
-          '<td class="mono">' + U.esc(r.docNo) + '</td>' +
-          '<td>' + U.esc(r.name) + '</td>' +
-          '<td>' + U.esc(r.category) + '</td>' +
-          '<td>' + hazardTag(r.hazard) + '</td>' +
-          '<td>' + U.esc(r.spec) + '</td>' +
-          '<td class="num">' + U.esc(r.qty) + '</td>' +
-          '<td>' + U.esc(r.unit) + '</td>' +
-          '<td>' + U.esc(r.applicant) + '</td>' +
-          '<td>' + U.esc(r.dept) + '</td>' +
-          '<td>' + U.esc(r.purpose) + '</td>' +
-          '<td>' + U.esc(r.operator) + '</td>' +
-        '</tr>';
-      }).join('') +
-      '<tr style="background:var(--surface-2);font-weight:600"><td colspan="7">合计 ' + rows.length + ' 条</td>' +
-      '<td class="num">—</td><td>—</td><td colspan="3" class="muted" style="font-weight:400">不同单位数量不合并计量</td></tr>';
+      ledgerEl.innerHTML = Report.ledgerHtml(blocks);
     }
 
     renderSummary(records);
@@ -760,18 +742,19 @@
     $('#rpCsvBtn').addEventListener('click', function () {
       var recs = Report.filterRecords(currentFilter());
       if (!recs.length) { U.toast('当前无记录可导出', 'err'); return; }
-      Report.exportCsv(recs, '领用记录表_' + U.today() + '.csv');
+      Report.exportLedgerCsv(currentFilter(), '化学品领用记录_' + U.today() + '.csv');
       U.toast('已导出 CSV', 'ok');
     });
     $('#rpXlsBtn').addEventListener('click', function () {
       var recs = Report.filterRecords(currentFilter());
       if (!recs.length) { U.toast('当前无记录可导出', 'err'); return; }
-      Report.exportExcel(recs, '领用记录表_' + U.today() + '.xls', Store.state.meta.orgName);
-      U.toast('已导出 Excel（含明细与汇总表）', 'ok');
+      Report.exportExcel(currentFilter(), '化学品领用记录_' + U.today() + '.xls', Store.state.meta.orgName);
+      U.toast('已导出 Excel（附录三格式 + 汇总表）', 'ok');
     });
     $('#rpPrintBtn').addEventListener('click', function () {
       var recs = Report.filterRecords(currentFilter());
-      Report.print(recs, currentFilter(), Store.state.meta.orgName);
+      if (!recs.length) { U.toast('当前无记录可打印', 'err'); return; }
+      Report.print(currentFilter(), Store.state.meta.orgName);
     });
 
     // 数据管理

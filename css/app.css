@@ -336,16 +336,35 @@ select.input { cursor: pointer; }
 @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
 
 /* ---------------- 报表 ---------------- */
-.report-title { text-align: center; margin-bottom: 14px; }
+.report-title { text-align: left; margin-bottom: 14px; }
 .report-title h3 { font-size: 17px; letter-spacing: 2px; }
 .report-sub { font-size: 12px; color: var(--text-2); margin-top: 5px; line-height: 1.8; }
-.table-report th, .table-report td { padding: 7px 9px; font-size: 12.5px; }
-.sign-row {
-  display: flex; gap: 30px; flex-wrap: wrap;
-  margin-top: 22px; padding-top: 12px; border-top: 1px dashed var(--border-strong);
-  font-size: 12.5px; color: var(--text-2);
+
+/* 台账块（附录三格式，屏幕预览与打印共用表格骨架） */
+.ledger-wrap { display: flex; flex-direction: column; gap: 26px; }
+.ledger-block { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.ledger-info {
+  display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center;
+  padding: 10px 14px; background: var(--surface-2);
+  border-bottom: 1px solid var(--border); font-size: 13px;
 }
-.sign { min-width: 170px; }
+.ledger-info b { font-weight: 600; margin-right: 8px; color: var(--text-2); font-size: 12px; }
+.ledger-count { margin-left: auto; color: var(--text-3); font-size: 12px; }
+.ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ledger-table th, .ledger-table td {
+  border: 1px solid var(--border-strong); padding: 7px 10px; text-align: left;
+}
+.ledger-table .p-headrow th {
+  background: var(--surface-2); text-align: center; font-weight: 600;
+  white-space: nowrap;
+}
+.ledger-table .p-label {
+  background: var(--surface-2); text-align: center; font-weight: 600;
+  width: 92px; white-space: nowrap;
+}
+.ledger-table .p-num { text-align: center; font-variant-numeric: tabular-nums; }
+.ledger-table .p-date { text-align: center; white-space: nowrap; }
+.ledger-table .p-empty { text-align: center; color: var(--text-3); padding: 18px; }
 
 /* ---------------- Toast ---------------- */
 .toast {
@@ -358,21 +377,51 @@ select.input { cursor: pointer; }
 .toast.err { background: var(--danger); }
 .toast.ok { background: var(--ok); }
 
-/* ---------------- 打印 ---------------- */
+/* ---------------- 打印（附录三受控表单，A4 纵向） ---------------- */
 .print-root { display: none; }
 
 @media print {
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block !important; }
-  @page { size: A4 landscape; margin: 12mm 10mm; }
-  .p-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: var(--font); }
-  .p-table th, .p-table td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
-  .p-table th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .p-title { text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 3px; margin-bottom: 6px; }
-  .p-sub { text-align: center; font-size: 11px; margin-bottom: 10px; }
-  .p-sign { display: flex; gap: 28px; margin-top: 18px; font-size: 11px; }
-  .p-sign div { flex: 1; }
-  .p-tot { font-weight: 700; }
+  @page { size: A4 portrait; margin: 14mm 14mm 12mm; }
+
+  /* 页眉：程序名 + 文件编号/版本，下横线 */
+  .p-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 10.5px; color: #333;
+    border-bottom: 1.2px solid #333; padding-bottom: 5px; margin-bottom: 12px;
+  }
+  /* 标题：附录三：化学品领用记录（左对齐，同参考表单） */
+  .p-title { font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
+
+  /* 每种化学品独占一页 */
+  .p-block { page-break-after: always; }
+  .p-block:last-child { page-break-after: auto; }
+
+  /* 表格骨架（与屏幕版 ledger-table 同类） */
+  .p-table { width: 100%; border-collapse: collapse; font-size: 11.5px; font-family: var(--font); }
+  .p-table th, .p-table td { border: 1px solid #333; padding: 5px 8px; text-align: left; }
+  .p-table .p-headrow th {
+    text-align: center; font-weight: 700;
+    background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .p-table .p-label {
+    text-align: center; font-weight: 700; width: 70px; white-space: nowrap;
+    background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .p-table .p-num { text-align: center; font-variant-numeric: tabular-nums; }
+  .p-table .p-date { text-align: center; white-space: nowrap; }
+  .p-table .p-empty { text-align: center; color: #666; padding: 16px; }
+
   tr { page-break-inside: avoid; }
   thead { display: table-header-group; }
+
+  /* 页脚：公司/质量管理系统 | 机密/专有 | 受控文件 第X页共Y页 */
+  .p-foot {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-size: 10px; color: #333; margin-top: 10px;
+    border-top: 1.2px solid #333; padding-top: 5px;
+  }
+  .p-foot-c { align-self: center; }
+  .p-foot-r { text-align: right; }
 }
