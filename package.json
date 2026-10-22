@@ -1,0 +1,22 @@
+{
+  "name": "chemical-management",
+  "version": "1.0.0",
+  "description": "化学品管理系统 —— 领用记录与领用记录表输出（纯前端单机应用）",
+  "private": true,
+  "scripts": {
+    "test": "node test/core.test.js",
+    "test:dom": "node test/dom.test.js",
+    "serve": "npx --yes serve ."
+  },
+  "keywords": [
+    "化学品",
+    "危化品",
+    "领用记录",
+    "台账",
+    "化学品管理"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

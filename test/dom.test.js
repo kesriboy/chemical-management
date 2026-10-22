@@ -1,6 +1,6 @@
 /* DOM 级集成测试：用 jsdom 真实加载 index.html + 全部脚本，
    驱动界面交互，验证渲染、弹窗、事件绑定、导出产物。
-   需设置 NODE_PATH 指向 node workspace。 */
+   依赖 jsdom：npm install --no-save jsdom（CI 中已自动安装）。 */
 const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');

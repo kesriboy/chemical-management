@@ -95,17 +95,20 @@
 
 ```
 化学品/
-├── index.html          入口，双击运行
+├── index.html            入口，双击运行
+├── package.json          元信息与测试脚本
 ├── css/
-│   └── app.css         样式（含 @media print 打印样式）
+│   └── app.css           样式（含 @media print 打印样式）
 ├── js/
-│   ├── utils.js        工具函数（日期、CSV、下载、弹窗、Toast）
-│   ├── store.js        数据层（CRUD、库存计算、导入导出）
-│   ├── report.js       报表层（筛选、汇总、Excel/CSV/打印）
-│   └── app.js          界面层（渲染、事件、弹窗表单）
-└── test/
-    ├── core.test.js    核心业务逻辑测试（68 项）
-    └── dom.test.js     DOM 集成测试（57 项）
+│   ├── utils.js          工具函数（日期、CSV、下载、弹窗、Toast）
+│   ├── store.js          数据层（CRUD、库存计算、导入导出）
+│   ├── report.js         报表层（筛选、汇总、Excel/CSV/打印）
+│   └── app.js            界面层（渲染、事件、弹窗表单）
+├── test/
+│   ├── core.test.js      核心业务逻辑测试（68 项）
+│   └── dom.test.js       DOM 集成测试（57 项）
+└── .github/workflows/
+    └── ci.yml            GitHub Actions：push 自动跑测试
 ```
 
 ---
@@ -113,17 +116,35 @@
 ## 六、测试
 
 ```bash
-# 核心业务逻辑（无需依赖）
-node test/core.test.js
+# 核心业务逻辑（零依赖）
+npm test
+# 或：node test/core.test.js
 
-# DOM 集成测试（需 jsdom）
-NODE_PATH=<jsdom所在路径> node test/dom.test.js
+# DOM 集成测试（需先装 jsdom）
+npm install --no-save jsdom
+npm run test:dom
 ```
 
 覆盖范围：库存扣减与回冲、超库存拦截、退库语义、库存预警阈值、报表多条件筛选、六种汇总维度、Excel/CSV 导出产物结构、打印内容、弹窗校验、单号生成与不复用、localStorage 持久化、导入导出。
 
+仓库内置 GitHub Actions 工作流（`.github/workflows/ci.yml`），每次 push 到 `main` 自动运行上述两套测试。
+
 ---
 
-## 七、浏览器要求
+## 七、在线访问（GitHub Pages）
+
+本项目为纯静态站点，可直接用 GitHub Pages 托管：
+
+1. 仓库 **Settings → Pages**
+2. Source 选择 **Deploy from a branch**，分支选 `main`、目录选 `/ (root)`
+3. 等待 1–2 分钟，访问 `https://<用户名>.github.io/<仓库名>/`
+
+> 在线版与本地版功能一致。**注意**：localStorage 按「域名 + 协议」隔离，
+> 因此在线版与本地 `file://` 打开时的数据**互不相通**。如需在线使用，
+> 请在在线环境中重新录入，或用「数据管理 → 导出 JSON」从本地迁移过去。
+
+---
+
+## 八、浏览器要求
 
 Chrome / Edge / Firefox / Safari 最新版。依赖 `localStorage`、`Blob` 下载、`window.print()`、`@media print`。
