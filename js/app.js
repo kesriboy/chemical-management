@@ -14,11 +14,40 @@
      ========================================================= */
   function init() {
     Store.load();
+    initCloud();
     bindTabs();
     bindGlobal();
     renderAll();
     Store.onChange(function () { renderAll(); });
     updateStorageFlag();
+  }
+
+  /* =========================================================
+     云端实时同步
+     ========================================================= */
+  function initCloud() {
+    if (!global.CloudSync) return;
+    CloudSync.init({ onStatus: updateCloudFlag });
+    if (!CloudSync.ready) return;
+    // 启动即拉取云端最新文档，使本端与手机端/其他设备保持一致
+    CloudSync.pull().then(function (data) {
+      if (data) { Store.applyRemote(data); renderAll(); }
+    });
+    // 监听其他设备的实时变更
+    CloudSync.onRemoteUpdate(function (remote) {
+      Store.applyRemote(remote);
+      renderAll();
+      U.toast('已同步云端最新数据', 'info');
+    });
+    CloudSync.startPolling();
+  }
+
+  function updateCloudFlag(ok, text) {
+    var f = $('#cloudFlag');
+    if (!f) return;
+    f.className = 'storage-flag ' + (ok ? 'ok' : 'warn');
+    f.textContent = text || (ok ? '云同步已连接' : '云同步异常');
+    f.title = '数据实时云端同步状态';
   }
 
   function updateStorageFlag() {
@@ -761,6 +790,16 @@
     $('#dataExportBtn').addEventListener('click', function () {
       U.download('化学品管理系统备份_' + U.today() + '.json', Store.exportAll(), 'application/json', false);
       U.toast('已导出备份文件', 'ok');
+    });
+    $('#dataSyncBtn').addEventListener('click', function () {
+      if (!global.CloudSync || !CloudSync.ready) { U.toast('云同步未连接', 'err'); return; }
+      var btn = $('#dataSyncBtn');
+      btn.disabled = true;
+      CloudSync.pull().then(function (data) {
+        btn.disabled = false;
+        if (data) { Store.applyRemote(data); renderAll(); U.toast('已拉取云端最新数据', 'ok'); }
+        else U.toast('云端暂无数据，可先在别处录入', 'info');
+      }).catch(function () { btn.disabled = false; U.toast('同步失败，请重试', 'err'); });
     });
     $('#orgName').addEventListener('change', function (e) {
       Store.state.meta.orgName = e.target.value.trim();

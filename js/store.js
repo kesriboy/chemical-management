@@ -330,11 +330,46 @@
   }
 
   /* ---------------- 提交 / 事件 ---------------- */
-  function commit() {
-    persist();
+  var suppressPush = false; // applyRemote 时临时抑制云端推送，避免回声写回
+
+  function fireChange() {
     listeners.forEach(function (fn) {
       try { fn(); } catch (e) { console.error(e); }
     });
+  }
+
+  function commit() {
+    persist();
+    // 本地改动后立即（防抖）同步到云端；未连接或正在应用远端数据时跳过
+    if (!suppressPush && global.CloudSync && global.CloudSync.ready) {
+      global.CloudSync.schedulePush(getSnapshot);
+    }
+    fireChange();
+  }
+
+  /** 当前状态的纯对象快照，用于云端 upsert（不含导出用的 exportedAt 等包装） */
+  function getSnapshot() {
+    return {
+      version: SCHEMA_VERSION,
+      chemicals: state.chemicals,
+      records: state.records,
+      meta: state.meta
+    };
+  }
+
+  /** 用云端文档覆盖本地状态（实时同步入口）。不触发回写，避免环路。 */
+  function applyRemote(obj) {
+    if (!obj) return;
+    state.chemicals = Array.isArray(obj.chemicals) ? obj.chemicals : [];
+    state.records   = Array.isArray(obj.records)   ? obj.records   : [];
+    state.meta      = obj.meta || { seq: 0, orgName: DEFAULT_ORG, updatedAt: '', docSeq: {} };
+    if (!state.meta.docSeq || typeof state.meta.docSeq !== 'object') state.meta.docSeq = {};
+    if (!state.meta.orgName) state.meta.orgName = DEFAULT_ORG;
+    normalize();
+    suppressPush = true;
+    persist();
+    suppressPush = false;
+    fireChange();
   }
 
   function onChange(fn) {
@@ -434,6 +469,8 @@
     nextSerialNo: nextSerialNo,
     exportAll: exportAll,
     importAll: importAll,
+    getSnapshot: getSnapshot,
+    applyRemote: applyRemote,
     clearRecords: clearRecords,
     clearAll: clearAll,
     genId: genId

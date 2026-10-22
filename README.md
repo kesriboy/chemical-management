@@ -1,6 +1,6 @@
 # 化学品管理系统
 
-面向实验室 / 工厂化学品领用与台账管理的单机应用。纯前端实现，**双击 `index.html` 即可运行**，无需安装、无需联网、无需起服务。
+面向实验室 / 工厂化学品领用与台账管理的应用。纯前端实现，**双击 `index.html` 即可本地运行**（离线、数据存本机）；部署到云端域名后自动开启**多端实时同步**。
 
 ---
 
@@ -94,15 +94,23 @@
 
 ---
 
-## 四、数据存储
+## 四、数据存储与云端实时同步
 
-数据保存在**本机浏览器的 localStorage**，不上传任何服务器。
+两套持久化，按运行环境自动切换：
 
-- 顶栏「本地存储正常」标识表示写入正常
-- 清理浏览器数据 / 换浏览器 / 换电脑会导致数据不可见
-- **请定期在「数据管理」导出 JSON 备份**
+- **云端实时同步（部署到云端域名时）**：整个应用状态作为单一文档存于云端数据库
+  （表 `chem_kv`，一行 `id='main'`）。任意一端改动即防抖上传；页面每 10 秒轮询
+  `updated_at`，发现变化即拉取最新数据并刷新 —— 实现手机 / 电脑 / 网页**数据时时更新**。
+- **本机 localStorage（始终保留）**：作为本地缓存与离线兜底，双击 `index.html` 离线可用；
+  部署版浏览器清理数据后重新打开会从云端恢复。
 
-> 需要多台电脑共享或手机访问时，可将本目录部署到 Render 等静态托管（保持文件结构不变即可）。
+- 顶栏「云同步已连接」表示在线同步正常；「本地存储正常」表示本机缓存写入正常
+- 首次在云端域名打开会自动拉取既有数据；本地录入会自动上传
+- **仍建议定期在「数据管理」导出 JSON 备份**
+
+> 实时同步依赖云端后端（WorkBuddy Cloud Service）。云端后端对「来源域名」有严格校验，
+> 因此只有从云端分配的域名打开时才具备实时同步能力；本地 `file://` 或第三方静态托管
+> （如 GitHub Pages）打开时为纯本地模式，数据互不相通。
 
 ---
 
@@ -118,10 +126,11 @@
 │   ├── utils.js          工具函数（日期、CSV、下载、弹窗、Toast）
 │   ├── store.js          数据层（CRUD、库存计算、导入导出）
 │   ├── report.js         报表层（筛选、汇总、Excel/CSV/打印）
+│   ├── cloud.js          云端实时同步层（单文档 upsert + 轮询）
 │   └── app.js            界面层（渲染、事件、弹窗表单）
 ├── test/
-│   ├── core.test.js      核心业务逻辑测试（68 项）
-│   └── dom.test.js       DOM 集成测试（57 项）
+│   ├── core.test.js      核心业务逻辑测试（74 项）
+│   └── dom.test.js       DOM 集成测试（58 项）
 └── .github/workflows/
     └── ci.yml            GitHub Actions：push 自动跑测试
 ```
@@ -146,27 +155,20 @@ npm run test:dom
 
 ---
 
-## 七、在线访问（GitHub Pages）
+## 七、在线访问（云端实时版）
 
-本项目为纯静态站点，已部署至 GitHub Pages：
+实时同步版已部署到云端域名（唯一具备「数据时时更新」能力的入口）：
 
-**在线地址：https://kesriboy.github.io/chemical-management/**
+**在线地址：https://chem-mgmt.app.workbuddy.link/**
 
-仓库地址：https://github.com/kesriboy/chemical-management
+源码仓库（GitHub）：https://github.com/kesriboy/chemical-management
 
-本地修改后推送，Pages 会自动重新构建（通常 1–2 分钟）：
+代码推送到 `main` 后，GitHub Actions 会自动跑测试（`.github/workflows/ci.yml`）。
+云端实时版如需更新，重新发布即可。
 
-```bash
-git add -A
-git commit -m "描述本次改动"
-git push origin main
-```
-
-> 在线版与本地版功能一致。**注意**：localStorage 按「域名 + 协议」隔离，
-> 因此在线版与本地 `file://` 打开时的数据**互不相通**。如需在线使用，
-> 请在在线环境中重新录入，或用「数据管理 → 导出 JSON」从本地迁移过去。
-
-仓库内置 GitHub Actions 工作流（`.github/workflows/ci.yml`），每次 push 到 `main` 自动运行上述两套测试。
+> **关于 GitHub Pages**：GitHub Pages 只能托管静态文件、无法运行云端后端，
+> 其分配的 `github.io` 域名不在云端后端信任的来源范围内，因此 Pages 版为**纯本地模式**，
+> 不具备实时同步、数据也不互通。要「数据时时更新」请使用上面的云端地址。
 
 ---
 

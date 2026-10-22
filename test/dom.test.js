@@ -75,7 +75,7 @@ window.document.createElement = function (tag) {
 const OrigBlob = window.Blob;
 
 // 按顺序注入脚本（jsdom 不加载外部相对脚本时手动执行）
-['js/utils.js', 'js/store.js', 'js/report.js', 'js/app.js'].forEach(f => {
+['js/utils.js', 'js/store.js', 'js/report.js', 'js/cloud.js', 'js/app.js'].forEach(f => {
   const scriptEl = document.createElement('script');
   scriptEl.textContent = fs.readFileSync(path.join(ROOT, f), 'utf8');
   document.body.appendChild(scriptEl);
@@ -113,6 +113,12 @@ t('全局对象已挂载', () => {
 });
 t('DOMContentLoaded 后已完成初始化渲染', () => {
   eq($$('#kpiGrid .kpi').length, 4, 'KPI 未渲染，init 可能未执行');
+});
+t('云同步状态徽标已渲染（默认降级为本地，不崩溃）', () => {
+  ok($('#cloudFlag'), '缺少 #cloudFlag 徽标');
+  // jsdom 未加载 CDN SDK，CloudSync 应为 undefined，init 应安全跳过
+  ok(window.CloudSync, 'CloudSync 模块未挂载');
+  ok(!window.CloudSync || !window.CloudSync.ready, '无 SDK 时不应标记为已连接');
 });
 t('页面默认激活概览', () => {
   ok($('#page-dashboard').classList.contains('active'), '概览未激活');

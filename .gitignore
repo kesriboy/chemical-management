@@ -34,3 +34,12 @@ data.json
 /test/output/
 /test/tmp/
 coverage/
+
+# Android 打包工程：含签名密钥(keystore)与密码(key.properties)等本地敏感资产，
+# 且 assets/public 为 web 产物的副本，整体不入公开仓库（保留在本机构建）。
+android/
+
+# 云端应用标记（本地元数据，含本机路径）
+.wbapp_*.genie
+# 安装包（二进制）
+*.apk
