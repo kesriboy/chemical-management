@@ -36,6 +36,20 @@
     if (statusCb) { try { statusCb(ok, text); } catch (e) {} }
   }
 
+  // 把错误对象压成短串，便于在徽标上一眼看出是 CORS/401/42501/网络哪类问题
+  function shortErr(e) {
+    if (!e) return '';
+    var m = e.message || e.code || e.error_description || (typeof e === 'string' ? e : '');
+    if (!m) { try { m = JSON.stringify(e); } catch (_) { m = String(e); } }
+    m = String(m).replace(/\s+/g, ' ').trim();
+    return m.length > 40 ? m.slice(0, 40) + '…' : m;
+  }
+  function reportErr(where, e) {
+    console.warn('[cloud] ' + where + ' error', e);
+    try { window.__cloudLastError = { where: where, error: e }; } catch (_) {}
+    return shortErr(e);
+  }
+
   // 两个时间戳可能格式不同（如 2026-...Z vs 2026-...+00），统一按 epoch 比较
   function tsEqual(a, b) {
     if (!a || !b) return false;
@@ -71,12 +85,12 @@
     return cloud.database.from(TABLE)
       .select('data, updated_at').eq('id', DOC_ID).maybeSingle()
       .then(function (res) {
-        if (res.error) { console.warn('[cloud] pull error', res.error); setStatus(false, '云读取失败'); return null; }
+        if (res.error) { setStatus(false, '云读取失败 ' + reportErr('pull', res.error)); return null; }
         if (!res.data) return null;
         lastTs = res.data.updated_at;
         return res.data.data;
       })
-      .catch(function (e) { console.warn('[cloud] pull', e); return null; });
+      .catch(function (e) { setStatus(false, '云读取失败 ' + reportErr('pull', e)); return null; });
   }
 
   function push(stateObj) {
@@ -86,11 +100,11 @@
       data: stateObj,
       updated_at: new Date().toISOString()
     }).select().then(function (res) {
-      if (res.error) { console.warn('[cloud] push error', res.error); setStatus(false, '云写入失败'); return false; }
+      if (res.error) { setStatus(false, '云写入失败 ' + reportErr('push', res.error)); return false; }
       if (res.data && res.data[0]) lastTs = res.data[0].updated_at;
       setStatus(true, '云同步已连接');
       return true;
-    }).catch(function (e) { console.warn('[cloud] push', e); setStatus(false, '云写入失败'); return false; });
+    }).catch(function (e) { setStatus(false, '云写入失败 ' + reportErr('push', e)); return false; });
   }
 
   function schedulePush(getState) {
