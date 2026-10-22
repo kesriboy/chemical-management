@@ -19,6 +19,23 @@
     oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth',
     publishableKey: 'wbpk_1UK1uaxqzOzXq6W5MNGXOo_7hOJeZ33VNiUFF0N98t2VMxtdUNHN639'
   };
+
+  // 数据面入口地址。
+  // 关键：publicConfig.endpoint 指向的 *.app.workbuddy.host 是平台「内网」域名，
+  // 公网 DNS 不解析（实测 apex/app 均 NXDOMAIN），浏览器无法直接访问。
+  // 当应用被发布到 *.app.workbuddy.link 时，数据面经同源的 /.cloud/** 由平台边缘
+  // 代理到后端——所以浏览器端必须用「当前页面源」作为数据面 base（同源、免跨域）。
+  // 仅在非 workbuddy 域名（如本地 file:// 调试）才回退到激活下发的 endpoint。
+  function resolveApiBase() {
+    try {
+      var host = global.location && global.location.hostname || '';
+      if (/\.workbuddy\.(link|host|cn)$/.test(host)) {
+        return global.location.origin; // 同源：https://<app>.app.workbuddy.link
+      }
+    } catch (e) {}
+    return CLOUD.endpoint;
+  }
+  var API_BASE = resolveApiBase();
   var TABLE = 'chem_kv';
   var DOC_ID = 'main';
   var PUSH_DELAY = 800;
@@ -66,7 +83,7 @@
     }
     try {
       cloud = global.WorkBuddyCloud.createWorkBuddyCloud({
-        endpoint: CLOUD.endpoint,
+        endpoint: API_BASE,
         oauthRelayBaseUrl: CLOUD.oauthRelayBaseUrl,
         publishableKey: CLOUD.publishableKey
       });
