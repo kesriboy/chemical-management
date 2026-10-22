@@ -1,0 +1,36 @@
+# WorkBuddy 本地工作区元数据（不进入版本库）
+.workbuddy/
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 本地数据与临时文件（重要：勿将本地业务数据提交到仓库）
+*.local
+*.tmp
+*.bak
+data/
+data.json
+备份/
+*.backup
+
+# 测试产物
+/test/output/
+/test/tmp/
+coverage/

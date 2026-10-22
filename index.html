@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化学品管理系统</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">化</div>
+    <div class="brand-text">
+      <h1>化学品管理系统</h1>
+      <span>Chemical Management System · 领用记录与台账输出</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="storage-flag" id="storageFlag" title="数据存储状态"></div>
+    <div class="today" id="todayText"></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-page="dashboard">概览</button>
+  <button class="tab" data-page="chemicals">化学品档案</button>
+  <button class="tab" data-page="records">领用记录</button>
+  <button class="tab" data-page="report">领用记录表</button>
+  <button class="tab" data-page="data">数据管理</button>
+</nav>
+
+<main class="container">
+
+  <!-- ============ 概览 ============ -->
+  <section class="page active" id="page-dashboard">
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="split">
+      <div class="card">
+        <div class="card-head">
+          <h2>库存预警</h2>
+          <span class="muted" id="alertCount"></span>
+        </div>
+        <div class="card-body scroll" id="alertList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>近 10 次领用</h2>
+          <button class="btn ghost sm" data-goto="records">全部记录</button>
+        </div>
+        <div class="card-body scroll" id="recentList"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>本月领用趋势（按日）</h2></div>
+      <div class="card-body"><div class="chart" id="trendChart"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ 化学品档案 ============ -->
+  <section class="page" id="page-chemicals">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="search" id="chemSearch" class="input" placeholder="搜索名称 / 编号 / CAS / 厂家">
+        <select id="chemCategoryFilter" class="input sm-input"><option value="">全部类别</option></select>
+        <select id="chemHazardFilter" class="input sm-input"><option value="">全部危险性</option></select>
+        <label class="check"><input type="checkbox" id="chemOnlyAlert"> 仅看预警</label>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn ghost" id="chemExportBtn">导出台账</button>
+        <button class="btn primary" id="chemAddBtn">+ 新增化学品</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" id="chemTable">
+          <thead>
+            <tr>
+              <th style="width:110px">编号</th>
+              <th>名称</th>
+              <th style="width:100px">CAS 号</th>
+              <th style="width:100px">类别</th>
+              <th style="width:90px">危险性</th>
+              <th style="width:120px">规格/包装</th>
+              <th style="width:90px" class="num">库存</th>
+              <th style="width:90px" class="num">下限</th>
+              <th style="width:110px">存放位置</th>
+              <th style="width:130px">生产厂家</th>
+              <th style="width:100px">有效期</th>
+              <th style="width:120px">操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 领用记录 ============ -->
+  <section class="page" id="page-records">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="search" id="recSearch" class="input" placeholder="搜索单号 / 化学品 / 领用人">
+        <input type="date" id="recFrom" class="input sm-input" title="起始日期">
+        <span class="muted">至</span>
+        <input type="date" id="recTo" class="input sm-input" title="截止日期">
+        <select id="recDeptFilter" class="input sm-input"><option value="">全部部门</option></select>
+        <select id="recStatusFilter" class="input sm-input">
+          <option value="">全部状态</option>
+          <option value="已发放">已发放</option>
+          <option value="已退库">已退库</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn ghost" id="recExportBtn">导出明细</button>
+        <button class="btn primary" id="recAddBtn">+ 新增领用</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" id="recTable">
+          <thead>
+            <tr>
+              <th style="width:150px">单据号</th>
+              <th style="width:105px">领用日期</th>
+              <th>化学品</th>
+              <th style="width:80px" class="num">数量</th>
+              <th style="width:60px">单位</th>
+              <th style="width:90px">领用人</th>
+              <th style="width:110px">部门</th>
+              <th>用途</th>
+              <th style="width:90px">发放人</th>
+              <th style="width:80px">状态</th>
+              <th style="width:110px">操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <span id="recSummary" class="muted"></span>
+        <div class="pager" id="recPager"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 领用记录表 ============ -->
+  <section class="page" id="page-report">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="date" id="rpFrom" class="input sm-input" title="起始日期">
+        <span class="muted">至</span>
+        <input type="date" id="rpTo" class="input sm-input" title="截止日期">
+        <select id="rpDept" class="input sm-input"><option value="">全部部门</option></select>
+        <select id="rpChem" class="input sm-input"><option value="">全部化学品</option></select>
+        <select id="rpHazard" class="input sm-input"><option value="">全部危险性</option></select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn ghost" id="rpResetBtn">重置</button>
+        <button class="btn ghost" id="rpPrintBtn">打印 / PDF</button>
+        <button class="btn ghost" id="rpCsvBtn">导出 CSV</button>
+        <button class="btn primary" id="rpXlsBtn">导出 Excel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>领用记录表</h2>
+        <span class="muted" id="rpMeta"></span>
+      </div>
+      <div class="card-body">
+        <div class="report-title">
+          <h3 id="rpTitle">化学品领用记录表</h3>
+          <div class="report-sub" id="rpSubtitle"></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-report" id="rpTable">
+            <thead>
+              <tr>
+                <th style="width:46px">序号</th>
+                <th style="width:96px">领用日期</th>
+                <th style="width:140px">单据号</th>
+                <th>化学品名称</th>
+                <th style="width:88px">类别</th>
+                <th style="width:76px">危险性</th>
+                <th style="width:110px">规格/包装</th>
+                <th style="width:74px" class="num">数量</th>
+                <th style="width:52px">单位</th>
+                <th style="width:82px">领用人</th>
+                <th style="width:100px">部门</th>
+                <th>用途</th>
+                <th style="width:82px">发放人</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="sign-row" id="rpSign">
+          <div class="sign">制表人：______________</div>
+          <div class="sign">审核人：______________</div>
+          <div class="sign">批准人：______________</div>
+          <div class="sign">日期：______年____月____日</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>汇总统计</h2>
+        <div class="seg" id="rpDimSeg">
+          <button class="seg-btn active" data-dim="chemical">按化学品</button>
+          <button class="seg-btn" data-dim="dept">按部门</button>
+          <button class="seg-btn" data-dim="applicant">按领用人</button>
+          <button class="seg-btn" data-dim="purpose">按用途</button>
+          <button class="seg-btn" data-dim="month">按月份</button>
+          <button class="seg-btn" data-dim="category">按类别</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table" id="rpSumTable">
+            <thead><tr id="rpSumHead"></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数据管理 ============ -->
+  <section class="page" id="page-data">
+    <div class="split">
+      <div class="card">
+        <div class="card-head"><h2>数据备份</h2></div>
+        <div class="card-body">
+          <p class="muted">数据保存在本机浏览器 localStorage 中。建议定期导出 JSON 备份，浏览器清理数据会导致记录丢失。</p>
+          <div class="btn-row">
+            <button class="btn primary" id="dataExportBtn">导出全部数据 (JSON)</button>
+            <button class="btn ghost" id="dataImportBtn">导入备份 (JSON)</button>
+            <input type="file" id="dataFile" accept="application/json,.json" hidden>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>存储统计</h2></div>
+        <div class="card-body">
+          <div id="dataStats"></div>
+          <div class="form-item" style="margin-top:14px">
+            <label for="orgName">单位名称（用于报表抬头）</label>
+            <input type="text" id="orgName" class="input" placeholder="如：迈昆（苏州）电子科技有限公司" style="max-width:320px">
+            <div class="hint">设置后，导出的 Excel 与打印记录表抬头会自动带上该名称。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>维护操作</h2></div>
+      <div class="card-body">
+        <div class="btn-row">
+          <button class="btn ghost" id="dataSeedBtn">载入示例数据</button>
+          <button class="btn ghost" id="dataClearRecBtn">清空领用记录</button>
+          <button class="btn danger" id="dataClearAllBtn">清空全部数据</button>
+        </div>
+        <p class="muted" style="margin-top:12px">清空操作不可撤销，执行前请先导出备份。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ 弹窗 ============ -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">标题</h3>
+      <button class="icon-btn" id="modalClose" title="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="modalCancel">取消</button>
+      <button class="btn primary" id="modalOk">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 打印容器 -->
+<div id="printRoot" class="print-root"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/store.js"></script>
+<script src="js/report.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
