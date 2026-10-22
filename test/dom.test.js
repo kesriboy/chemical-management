@@ -326,6 +326,13 @@ t('打印内容为附录三受控表单版式', () => {
   ok(html.includes('受控文件'), '缺受控文件标注');
   ok(html.includes('第1页，共1页'), '缺页码');
   ok(html.includes('质量管理系统'), '缺页脚体系名');
+  // 公司名：默认单位名应出现在页脚，且不允许出现字面转义的 &nbsp;
+  ok(html.includes('迈昆（苏州）工程技术有限公司'), '页脚缺默认单位名称');
+  ok(!html.includes('&amp;nbsp;<br>质量管理系统'), '页脚公司名不应渲染为字面 &nbsp;');
+  // 页眉每页重复：p-block 数与 p-head 数一致
+  const blockCount = (html.match(/class="p-block"/g) || []).length;
+  const headCount = (html.match(/class="p-head"/g) || []).length;
+  eq(headCount, blockCount, '页眉未随每页重复: head=' + headCount + ' block=' + blockCount);
 });
 t('化学品台账导出含库存与下限', () => {
   downloads.length = 0;

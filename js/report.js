@@ -441,22 +441,34 @@
     var total = Math.max(blocks.length, 1);
 
     var html = [];
-    html.push('<div class="p-head"><span>化学品管理程序</span>' +
-      '<span>文件编号：' + U.esc(R.FORM_NO()) + '　版本号：' + U.esc(R.FORM_VER()) + '</span></div>');
-    html.push('<div class="p-title">附录三：化学品领用记录</div>');
+    var headHtml = '<div class="p-head"><span>化学品管理程序</span>' +
+      '<span>文件编号：' + U.esc(R.FORM_NO()) + '　版本号：' + U.esc(R.FORM_VER()) + '</span></div>';
+    var titleHtml = '<div class="p-title">附录三：化学品领用记录</div>';
 
+    function footHtml(pageNo, totalPages) {
+      return '<div class="p-foot">' +
+        '<div class="p-foot-l">' + (org ? U.esc(org) : '&nbsp;') + '<br>质量管理系统</div>' +
+        '<div class="p-foot-c">机密/专有</div>' +
+        '<div class="p-foot-r">受控文件<br>第' + pageNo + '页，共' + totalPages + '页</div>' +
+        '</div>';
+    }
+
+    /* 页眉/标题/页脚进每个页块：受控文件每页均带页眉页脚，且页脚可用 flex 钉在页底 */
     blocks.forEach(function (b, bi) {
       html.push('<div class="p-block">');
+      html.push(headHtml);
+      html.push(titleHtml);
       html.push(R.ledgerBlockHtml(b, { print: true, padTo: 14 }));
-      html.push('<div class="p-foot">' +
-        '<div class="p-foot-l">' + U.esc(org || '&nbsp;') + '<br>质量管理系统</div>' +
-        '<div class="p-foot-c">机密/专有</div>' +
-        '<div class="p-foot-r">受控文件<br>第' + (bi + 1) + '页，共' + total + '页</div>' +
-        '</div>');
+      html.push(footHtml(bi + 1, total));
       html.push('</div>');
     });
     if (!blocks.length) {
+      html.push('<div class="p-block">');
+      html.push(headHtml);
+      html.push(titleHtml);
       html.push('<div class="p-empty">当前筛选条件下无领用记录</div>');
+      html.push(footHtml(1, 1));
+      html.push('</div>');
     }
 
     root.innerHTML = html.join('');

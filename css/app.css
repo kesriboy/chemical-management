@@ -394,8 +394,13 @@ select.input { cursor: pointer; }
   /* 标题：附录三：化学品领用记录（左对齐，同参考表单） */
   .p-title { font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
 
-  /* 每种化学品独占一页 */
-  .p-block { page-break-after: always; }
+  /* 每种化学品独占一页；flex 纵向布局把页脚钉在页底 */
+  .p-block {
+    page-break-after: always;
+    display: flex; flex-direction: column;
+    /* A4 内容区高约 271mm（297 − 14 − 12），留余量避免溢出产生空白页 */
+    min-height: 256mm;
+  }
   .p-block:last-child { page-break-after: auto; }
 
   /* 表格骨架（与屏幕版 ledger-table 同类） */
@@ -416,11 +421,12 @@ select.input { cursor: pointer; }
   tr { page-break-inside: avoid; }
   thead { display: table-header-group; }
 
-  /* 页脚：公司/质量管理系统 | 机密/专有 | 受控文件 第X页共Y页 */
+  /* 页脚：公司/质量管理系统 | 机密/专有 | 受控文件 第X页共Y页（钉在页底） */
   .p-foot {
     display: flex; justify-content: space-between; align-items: flex-end;
-    font-size: 10px; color: #333; margin-top: 10px;
-    border-top: 1.2px solid #333; padding-top: 5px;
+    font-size: 10px; color: #333;
+    margin-top: auto; padding-top: 5px;
+    border-top: 1.2px solid #333;
   }
   .p-foot-c { align-self: center; }
   .p-foot-r { text-align: right; }

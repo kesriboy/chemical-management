@@ -30,12 +30,15 @@
 
   var UNITS = ['kg', 'g', 'L', 'mL', '瓶', '桶', '罐', '箱', '包', '支', '件'];
 
+  /** 单位默认名称：打印页眉/Excel 表头公司栏使用，可在「数据管理」中修改 */
+  var DEFAULT_ORG = '迈昆（苏州）工程技术有限公司';
+
   /* ---------------- 状态 ---------------- */
   var state = {
     version: SCHEMA_VERSION,
     chemicals: [],
     records: [],
-    meta: { seq: 0, orgName: '', updatedAt: '', docSeq: {} }
+    meta: { seq: 0, orgName: DEFAULT_ORG, updatedAt: '', docSeq: {} }
   };
 
   var listeners = [];
@@ -71,9 +74,10 @@
     state.version = raw.version || SCHEMA_VERSION;
     state.chemicals = Array.isArray(raw.chemicals) ? raw.chemicals : [];
     state.records   = Array.isArray(raw.records)   ? raw.records   : [];
-    state.meta      = raw.meta || { seq: 0, orgName: '', updatedAt: '', docSeq: {} };
+    state.meta      = raw.meta || { seq: 0, orgName: DEFAULT_ORG, updatedAt: '', docSeq: {} };
     if (typeof state.meta.seq !== 'number') state.meta.seq = 0;
     if (!state.meta.docSeq || typeof state.meta.docSeq !== 'object') state.meta.docSeq = {};
+    if (!state.meta.orgName) state.meta.orgName = DEFAULT_ORG;
     normalize();
   }
 
@@ -361,8 +365,9 @@
     if (mode === 'replace') {
       state.chemicals = data.chemicals;
       state.records = data.records;
-      state.meta = data.meta || { seq: 0, orgName: '', updatedAt: '', docSeq: {} };
+      state.meta = data.meta || { seq: 0, orgName: DEFAULT_ORG, updatedAt: '', docSeq: {} };
       if (!state.meta.docSeq || typeof state.meta.docSeq !== 'object') state.meta.docSeq = {};
+      if (!state.meta.orgName) state.meta.orgName = DEFAULT_ORG;
     } else {
       // merge：按 id 去重覆盖
       data.chemicals.forEach(function (c) {
