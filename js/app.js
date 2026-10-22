@@ -242,18 +242,18 @@
       var stockTag = neg ? '<span class="tag danger">负库存</span>'
         : (low ? '<span class="tag warn">预警</span>' : '');
       return '<tr>' +
-        '<td class="mono">' + U.esc(c.code || '—') + '</td>' +
-        '<td><strong>' + U.esc(c.name) + '</strong>' + (c.note ? ' <span class="muted" title="' + U.esc(c.note) + '">📝</span>' : '') + '</td>' +
-        '<td class="mono">' + U.esc(c.cas || '—') + '</td>' +
-        '<td><span class="tag">' + U.esc(c.category) + '</span></td>' +
-        '<td>' + hazardTag(c.hazard) + '</td>' +
-        '<td>' + U.esc(c.spec || '—') + '</td>' +
-        '<td class="num" style="' + stockCls + '">' + U.fmtQty(stock) + ' ' + U.esc(c.unit) + ' ' + stockTag + '</td>' +
-        '<td class="num muted">' + U.fmtQty(c.minStock) + '</td>' +
-        '<td>' + U.esc(c.location || '—') + '</td>' +
-        '<td>' + U.esc(c.manufacturer || '—') + '</td>' +
-        '<td>' + U.esc(c.expiry || '—') + '</td>' +
-        '<td><div class="actions">' +
+        '<td class="mono" data-label="编号">' + U.esc(c.code || '—') + '</td>' +
+        '<td class="cell-title" data-label="名称"><strong>' + U.esc(c.name) + '</strong>' + (c.note ? ' <span class="muted" title="' + U.esc(c.note) + '">📝</span>' : '') + '</td>' +
+        '<td class="mono" data-label="CAS 号">' + U.esc(c.cas || '—') + '</td>' +
+        '<td data-label="类别"><span class="tag">' + U.esc(c.category) + '</span></td>' +
+        '<td data-label="危险性">' + hazardTag(c.hazard) + '</td>' +
+        '<td data-label="规格/包装">' + U.esc(c.spec || '—') + '</td>' +
+        '<td class="num" data-label="当前库存" style="' + stockCls + '">' + U.fmtQty(stock) + ' ' + U.esc(c.unit) + ' ' + stockTag + '</td>' +
+        '<td class="num" data-label="库存下限" style="color:var(--text-3)">' + U.fmtQty(c.minStock) + '</td>' +
+        '<td data-label="存放位置">' + U.esc(c.location || '—') + '</td>' +
+        '<td data-label="生产厂家">' + U.esc(c.manufacturer || '—') + '</td>' +
+        '<td data-label="有效期至">' + U.esc(c.expiry || '—') + '</td>' +
+        '<td class="cell-actions" data-label="操作"><div class="actions">' +
           '<button class="link-btn" data-act="chem-edit" data-id="' + c.id + '">编辑</button>' +
           '<button class="link-btn" data-act="chem-use" data-id="' + c.id + '">领用</button>' +
           '<button class="link-btn del" data-act="chem-del" data-id="' + c.id + '">删除</button>' +
@@ -402,18 +402,18 @@
         var c = Store.getChemical(r.chemicalId);
         var isReturn = r.status === 'returned';
         return '<tr>' +
-          '<td class="mono">' + U.esc(r.docNo) + '</td>' +
-          '<td class="mono">' + U.esc(r.date) + '</td>' +
-          '<td><strong>' + U.esc(r.chemicalName) + '</strong>' +
+          '<td class="mono" data-label="单据号">' + U.esc(r.docNo) + '</td>' +
+          '<td class="mono" data-label="领用日期">' + U.esc(r.date) + '</td>' +
+          '<td class="cell-title" data-label="化学品"><strong>' + U.esc(r.chemicalName) + '</strong>' +
             (c ? ' <span class="tag mute">' + U.esc(c.category) + '</span>' : ' <span class="tag danger">档案已删除</span>') + '</td>' +
-          '<td class="num"' + (isReturn ? ' style="color:var(--ok)"' : '') + '>' + U.fmtQty(r.qty) + '</td>' +
-          '<td>' + U.esc(r.unit) + '</td>' +
-          '<td>' + U.esc(r.applicant) + '</td>' +
-          '<td>' + U.esc(r.dept || '—') + '</td>' +
-          '<td>' + U.esc(r.purpose || '—') + '</td>' +
-          '<td>' + U.esc(r.operator || '—') + '</td>' +
-          '<td><span class="tag ' + (isReturn ? 'ok' : 'info') + '">' + U.esc(Store.STATUS_TEXT[r.status]) + '</span></td>' +
-          '<td><div class="actions">' +
+          '<td class="num" data-label="数量"' + (isReturn ? ' style="color:var(--ok)"' : '') + '>' + U.fmtQty(r.qty) + '</td>' +
+          '<td data-label="单位">' + U.esc(r.unit) + '</td>' +
+          '<td data-label="领用人">' + U.esc(r.applicant) + '</td>' +
+          '<td data-label="部门">' + U.esc(r.dept || '—') + '</td>' +
+          '<td data-label="用途">' + U.esc(r.purpose || '—') + '</td>' +
+          '<td data-label="发放人">' + U.esc(r.operator || '—') + '</td>' +
+          '<td data-label="状态"><span class="tag ' + (isReturn ? 'ok' : 'info') + '">' + U.esc(Store.STATUS_TEXT[r.status]) + '</span></td>' +
+          '<td class="cell-actions" data-label="操作"><div class="actions">' +
             '<button class="link-btn" data-act="rec-edit" data-id="' + r.id + '">编辑</button>' +
             '<button class="link-btn del" data-act="rec-del" data-id="' + r.id + '">删除</button>' +
           '</div></td></tr>';
@@ -639,16 +639,16 @@
     }
     tbody.innerHTML = rows.map(function (s) {
       return '<tr>' +
-        '<td><strong>' + U.esc(s.key) + '</strong></td>' +
-        '<td class="muted">' + U.esc(s.sub || '—') + '</td>' +
-        '<td class="num">' + s.count + '</td>' +
-        '<td class="num">' + U.esc(s.unitText) + '</td>' +
+        '<td class="cell-title" data-label="' + U.esc(def.label) + '"><strong>' + U.esc(s.key) + '</strong></td>' +
+        '<td class="muted" data-label="说明">' + U.esc(s.sub || '—') + '</td>' +
+        '<td class="num" data-label="领用次数">' + s.count + '</td>' +
+        '<td class="num" data-label="分单位数量">' + U.esc(s.unitText) + '</td>' +
       '</tr>';
     }).join('') +
     '<tr style="background:var(--surface-2);font-weight:600">' +
-      '<td>合计</td><td class="muted" style="font-weight:400">' + rows.length + ' 个分组</td>' +
-      '<td class="num">' + records.length + '</td>' +
-      '<td class="num">—</td></tr>';
+      '<td data-label="' + U.esc(def.label) + '">合计</td><td class="muted" data-label="说明" style="font-weight:400">' + rows.length + ' 个分组</td>' +
+      '<td class="num" data-label="领用次数">' + records.length + '</td>' +
+      '<td class="num" data-label="分单位数量">—</td></tr>';
   }
 
   /* =========================================================
